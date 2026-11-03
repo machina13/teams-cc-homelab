@@ -67,22 +67,21 @@ class TestNativeUpdater(unittest.TestCase):
         self.origin_patch=patch.object(host,"REPO_URLS",{str(self.origin)})
         self.origin_patch.start()
         self.addCleanup(self.origin_patch.stop)
-        self.head_patch=patch.object(
-            host,"public_head",side_effect=lambda:run("git","rev-parse","HEAD",cwd=self.seed)
-        )
-        self.head_patch.start()
-        self.addCleanup(self.head_patch.stop)
-        self.extension_patch=patch.object(
-            host,"public_extension",
-            side_effect=lambda _sha,dest:shutil.copytree(self.seed/"extension",dest)
-        )
-        self.extension_patch.start()
-        self.addCleanup(self.extension_patch.stop)
 
     def commit_push(self):
         run("git","add","extension","scripts",cwd=self.seed)
         run("git","commit","-m","change extension",cwd=self.seed)
         run("git","push","origin","HEAD:refs/heads/"+BRANCH,cwd=self.seed)
+
+    def update_from_fixture(self):
+        with patch.object(
+            host,"public_head",
+            side_effect=lambda:run("git","rev-parse","HEAD",cwd=self.seed)
+        ), patch.object(
+            host,"public_extension",
+            side_effect=lambda _sha,dest:shutil.copytree(self.seed/"extension",dest)
+        ):
+            return host.perform_update(self.cfg,"chrome-extension://"+EXT_ID+"/")
 
     def test_anonymous_update_is_explicit_and_keeps_same_extension_path(self):
         self.assertEqual(self.installed.joinpath("popup.html").read_text(),"<html>original</html>")
@@ -90,14 +89,14 @@ class TestNativeUpdater(unittest.TestCase):
         (self.seed/"extension"/"popup.html").write_text("<html>updated</html>")
         self.commit_push()
         self.assertEqual(self.installed.joinpath("popup.html").read_text(),"<html>original</html>")
-        result=host.perform_update(self.cfg,"chrome-extension://"+EXT_ID+"/")
+        result=self.update_from_fixture()
         self.assertTrue(result["ok"])
         self.assertTrue(result["updated"])
         self.assertEqual(result["version"],"2.2.1")
         self.assertEqual(self.installed.joinpath("popup.html").read_text(),"<html>updated</html>")
         self.assertEqual((self.installed.parent/(".teamscc-backup-"+self.installed.name)/"popup.html").read_text(),"<html>original</html>")
         self.assertEqual(json.loads(self.cfg.read_text())["installed_commit"],run("git","rev-parse","HEAD",cwd=self.seed))
-        again=host.perform_update(self.cfg,"chrome-extension://"+EXT_ID+"/")
+        again=self.update_from_fixture()
         self.assertFalse(again["updated"])
 
     def test_sender_origin_is_restricted(self):
@@ -116,7 +115,7 @@ class TestNativeUpdater(unittest.TestCase):
 
     def test_runtime_does_not_invoke_git_or_credentials(self):
         with patch.object(host,"git",side_effect=AssertionError("Git must never execute")):
-            result=host.perform_update(self.cfg,"chrome-extension://"+EXT_ID+"/")
+            result=self.update_from_fixture()
         self.assertTrue(result["ok"])
         self.assertFalse(result["updated"])
 
