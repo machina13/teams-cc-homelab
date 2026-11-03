@@ -61,8 +61,13 @@ def install(home=None, download=fetch_host):
     ext_id = cfg.get("extension_id", "")
     if not re.fullmatch(r"[a-p]{32}", ext_id):
         raise ValueError("ID Chrome inválido en la configuración del actualizador")
-    if cfg.get("branch") != "main":
-        raise ValueError("El repositorio configurado debe usar la rama main")
+    # Legacy installations can retain a different branch in config.json.
+    # This host never uses that branch or the local Git remote: it is pinned
+    # to the public main branch via HTTPS. Normalize only after validating the
+    # extension ID and the registered native host.
+    old_branch = cfg.get("branch")
+    if not isinstance(old_branch, str) or not old_branch:
+        raise ValueError("La rama anterior no es válida")
     folder = Path(cfg.get("extension_dir", ""))
     manifest = json.loads((folder / "manifest.json").read_text(encoding="utf-8"))
     if manifest.get("name") != EXTENSION_NAME:
@@ -106,6 +111,19 @@ def install(home=None, download=fetch_host):
         + shlex.quote(str(host_path)) + ' "$@"\n'
     )
     atomic_write(wrapper, wrapper_body.encode("utf-8"), 0o700)
+
+    # Atomic, reversible migration of the local updater metadata.
+    # Never change Chrome storage, the extension folder or the backend.
+    if old_branch != "main":
+        backup_config = config.with_name("config.pre-noauth.json")
+        if not backup_config.exists():
+            atomic_write(backup_config, config.read_bytes(), 0o600)
+        cfg["branch"] = "main"
+        atomic_write(
+            config,
+            (json.dumps(cfg, indent=2, ensure_ascii=False) + "\n").encode("utf-8"),
+            0o600,
+        )
     return ext_id
 
 
