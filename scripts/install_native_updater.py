@@ -173,6 +173,8 @@ def install(repo,extension_id,extension_dir,browser="chrome",home=None):
     except (OSError,ValueError):
         raise UpdateError("No se pudo identificar la carpeta instalada") from None
     branch=git(repo,"symbolic-ref","--quiet","--short","HEAD")
+    if branch != "main":
+        raise UpdateError("Instala solo desde main del repositorio público")
     verify_repo(repo,branch)
     if git(repo,"status","--porcelain"):
         raise UpdateError("El repositorio tiene cambios locales; utiliza un clon limpio")

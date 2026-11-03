@@ -19,7 +19,7 @@ BRANCH="main"
 EXT_ID="a"*32
 
 def run(*cmd,cwd=None):
-    p=subprocess.run(cmd,cwd=cwd,text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,check=False)
+    p=subprocess.run(cmd,cwd=cwd,universal_newlines=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,check=False)
     if p.returncode:
         raise AssertionError("git command failed: "+" ".join(map(str,cmd))+"\n"+p.stderr)
     return p.stdout.strip()
@@ -46,7 +46,8 @@ class TestNativeUpdater(unittest.TestCase):
         self.cfg.parent.mkdir(parents=True)
         run("git","init","--bare",str(self.origin))
         self.seed.mkdir()
-        run("git","init","-b",BRANCH,cwd=self.seed)
+        run("git","init",cwd=self.seed)
+        run("git","checkout","-b",BRANCH,cwd=self.seed)
         run("git","config","user.name","Teams CC Test",cwd=self.seed)
         run("git","config","user.email","ci@example.test",cwd=self.seed)
         run("git","remote","add","origin",str(self.origin),cwd=self.seed)
@@ -89,6 +90,10 @@ class TestNativeUpdater(unittest.TestCase):
     def test_sender_origin_is_restricted(self):
         with self.assertRaisesRegex(host.UpdateError,"Origen Chrome"):
             host.perform_update(self.cfg,"chrome-extension://"+"b"*32+"/")
+
+    def test_only_main_branch_is_accepted(self):
+        with self.assertRaisesRegex(host.UpdateError,"solo permite la rama main"):
+            host.verify_repo(self.repo,"feature/testing")
 
     def test_untrusted_git_remote_is_rejected(self):
         run("git","remote","set-url","origin","https://github.com/other/repo.git",cwd=self.repo)

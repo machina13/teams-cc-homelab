@@ -25,7 +25,7 @@ jobs:
         run: node --test tests/test_extension_record.cjs tests/test_background_capture.cjs tests/test_mic_options.cjs
       - name: Web audio playback regression tests
         run: node --test tests/test_web_audio_playback.cjs
-      - name: Private GitHub updater popup tests
+      - name: Manual public GitHub updater popup tests
         run: node --test tests/test_updater_popup.cjs
       - name: Custom server address and on-demand origin permission
         run: node --test tests/test_server_configuration.cjs
