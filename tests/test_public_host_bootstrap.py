@@ -66,14 +66,14 @@ class TestPublicHostBootstrap(unittest.TestCase):
             config.write_text(json.dumps(old_cfg))
             root = home / ".local" / "share" / "teamscc-updater"
             root.mkdir(parents=True)
-            (root / "native_host").write_text("#!/bin/sh\\necho old-host\n")
+            (root / "native_host").write_text("#!/bin/sh\necho old-host\n")
             native = home / ".config" / "google-chrome" / "NativeMessagingHosts"
             native.mkdir(parents=True)
             registered = native / (bootstrap.HOST_NAME + ".json")
             registered.write_text(json.dumps({
                 "path": str(root / "native_host"),
                 "allowed_origins": ["chrome-extension://" + ext_id + "/"]}))
-            fake_host = b'PUBLIC_API = "https://api.github.com"\\ndef public_extension(): pass\\n'
+            fake_host = b'PUBLIC_API = "https://api.github.com"\ndef public_extension(): pass\n'
             with patch.object(bootstrap.os, "geteuid", return_value=1000):
                 result = bootstrap.install(home=home, download=lambda: fake_host)
             self.assertEqual(result, ext_id)
