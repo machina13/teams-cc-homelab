@@ -13,9 +13,9 @@ import sys
 ROOT=Path(__file__).resolve().parents[1]
 RULES={
     "Groq API key":re.compile(rb"gsk_[A-Za-z0-9_-]{20,}"),
-    "Dynamic DNS hostname":re.compile(rb"(?i:[a-z0-9-]+\\.duckdns\\.org)"),
+    "Dynamic DNS hostname":re.compile(rb"(?i:[a-z0-9-]+\.duckdns\.org)"),
     "Embedded LAN host:port":re.compile(
-        rb"(?<![0-9])(?:192\\.168|10\\.[0-9]{1,3})\\.[0-9]{1,3}\\.[0-9]{1,3}:[0-9]{2,5}\\b"
+        rb"(?<![0-9])(?:192\.168|10\.[0-9]{1,3}|172\.(?:1[6-9]|2[0-9]|3[01]))\.[0-9]{1,3}\.[0-9]{1,3}:[0-9]{2,5}\b"
     ),
     "GitHub access token":re.compile(rb"(?:ghp_|gho_|ghu_|ghs_|ghr_|github_pat_)[A-Za-z0-9_]{15,}"),
     "Slack token":re.compile(rb"xox[baprs]-[A-Za-z0-9-]{20,}"),
