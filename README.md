@@ -31,6 +31,22 @@ Después:
 
 Las siguientes actualizaciones serán manuales con el botón del popup, sin volver a clonar ni instalar ZIP. El actualizador bloquea el reemplazo mientras existe una grabación o fragmentos pendientes.
 
+## Actualización anónima desde GitHub (sin usuario ni contraseña)
+
+El botón **Actualizar desde GitHub** consulta exclusivamente el repositorio público mediante HTTPS anónimo (API y ZIP de un commit fijo). No utiliza `git fetch`, credenciales de GitHub, SSH, PAT ni un gestor de contraseñas. El host de mensajería nativa está restringido al ID de la extensión instalada; la actualización se inicia solo al pulsar el botón y se bloquea mientras haya grabaciones pendientes.
+
+**Si instalaste Teams CC 2.2.1 antes de este cambio**, actualiza **solo** el host nativo una vez, desde RHEL 8, con tu usuario habitual y sin `sudo`:
+
+```bash
+curl -fsSL --retry 2 \
+  -o /tmp/teamscc-upgrade-noauth.py \
+  https://raw.githubusercontent.com/machina13/teams-cc-homelab/main/scripts/upgrade_noauth_host.py
+
+python3 /tmp/teamscc-upgrade-noauth.py
+```
+
+Espera el mensaje `ACTUALIZADOR ANÓNIMO INSTALADO`. Se conserva el mismo ID, extensión, URL del backend y token local. No reinstales ni vuelvas a cargar la extensión. Luego abre el popup y pulsa **Actualizar desde GitHub** (sin grabaciones activas). Debe informar de la versión vigente o instalar la versión más reciente sin solicitar credenciales.
+
 ## Checklist de migración y QA en RHEL 8
 
 Para actualizar **la extensión ya instalada**, preservando su ID, configuración y token, sigue la guía de verificación [RHEL 8: migración y pruebas](docs/RHEL8_MIGRATION_QA.md). **No desinstales ni cargues otra extensión.** El backend existente no necesita desplegarse de nuevo.
