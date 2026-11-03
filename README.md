@@ -2,7 +2,7 @@
 
 Extensión de Chrome para subtítulos de Microsoft Teams Web y captura opcional de audio WebM/Opus. Almacena los archivos en un backend privado y transcribe mediante Groq Whisper solo después de la autorización explícita del usuario.
 
-**Versión: 2.2.1.** Repositorio público independiente, sin el historial de desarrollo anterior. La URL del servidor, su puerto y las credenciales se configuran localmente; no se incluyen en este código.
+**Versión: 2.3.0.** Repositorio público independiente, sin el historial de desarrollo anterior. La URL del servidor, su puerto y las credenciales se configuran localmente; no se incluyen en este código.
 
 ## Migrar la extensión existente en Chrome Linux (RHEL 8)
 
@@ -46,6 +46,18 @@ python3 /tmp/teamscc-upgrade-noauth.py
 ```
 
 Espera el mensaje `ACTUALIZADOR ANÓNIMO INSTALADO`. Se conserva el mismo ID, extensión, URL del backend y token local. No reinstales ni vuelvas a cargar la extensión. Luego abre el popup y pulsa **Actualizar desde GitHub** (sin grabaciones activas). Debe informar de la versión vigente o instalar la versión más reciente sin solicitar credenciales.
+
+## Aviso de grabación al entrar a una reunión (v2.3.0)
+
+Teams CC detecta que la llamada está activa al observar controles visibles de Teams Web (por ejemplo, Salir / Colgar). Tras confirmar que la llamada es estable, muestra una tarjeta flotante **Preparar grabación / Ahora no** dentro de la pestaña. No se activa en el calendario ni en la pantalla previa a unirse; no depende de tener subtítulos habilitados.
+
+- **Preparar grabación:** intenta abrir el popup existente de Chrome, que contiene la confirmación obligatoria de autorización y el botón **Grabar audio**. Si Chrome no permite abrirlo desde la página, la tarjeta indica que debes abrir Teams CC desde el icono de extensiones. **Nunca inicia audio por sí sola**.
+- **Ahora no:** descarta el aviso durante esa llamada. La tarjeta tampoco aparece si ya hay una grabación o subida pendiente.
+- La opción **Avisarme al entrar a una reunión** del popup permite desactivar esta función. Su valor se conserva localmente.
+- Tras dejar la llamada, el detector espera a que desaparezcan sus controles durante aproximadamente 15 segundos antes de habilitar un aviso para la próxima reunión.
+- La interfaz de Teams puede cambiar; si no aparece la tarjeta en una reunión real, se deben revisar sus controles DOM. Las pruebas automáticas cubren simulaciones, no la interfaz privada de Teams.
+
+**Prueba rápida:** después de pulsar **Actualizar desde GitHub** sin grabaciones activas, comprueba la versión 2.3.0 en `chrome://extensions`; entra a una reunión web de prueba, espera unos segundos y selecciona **Preparar grabación**. Confirma consentimiento en el popup y pulsa **Grabar audio**. No es necesario cambiar el contenedor del backend.
 
 ## Checklist de migración y QA en RHEL 8
 
