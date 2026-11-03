@@ -8,7 +8,7 @@ const path=require('node:path');
 const root=path.join(__dirname,'..');
 const promptSource=fs.readFileSync(path.join(root,'extension/meeting_prompt.js'),'utf8');
 const backgroundSource=fs.readFileSync(path.join(root,'extension/background.js'),'utf8');
-const manifest=JSON.parse(fs.readFileSync(path.join(root,'extension/manifest.json'),'utf8');
+const manifest=JSON.parse(fs.readFileSync(path.join(root,'extension/manifest.json'),'utf8'));
 
 function harness({meetingPrompts=true,audioStatus={status:'stopped',pending:0}}={}){
   let now=1000, buttons=[],shown=null,interval=null,storageListener=null,events=[];
