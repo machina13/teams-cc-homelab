@@ -1,5 +1,7 @@
-"""End-to-end private updater tests using local Git remotes; no network or credentials."""
+"""Anonymous public updater tests using local fixtures; no network or credentials."""
 import importlib
+import io
+import zipfile
 import json
 import os
 import shutil
@@ -71,20 +73,30 @@ class TestNativeUpdater(unittest.TestCase):
         run("git","commit","-m","change extension",cwd=self.seed)
         run("git","push","origin","HEAD:refs/heads/"+BRANCH,cwd=self.seed)
 
-    def test_private_git_update_is_explicit_and_keeps_same_extension_path(self):
+    def update_from_fixture(self):
+        with patch.object(
+            host,"public_head",
+            side_effect=lambda:run("git","rev-parse","HEAD",cwd=self.seed)
+        ), patch.object(
+            host,"public_extension",
+            side_effect=lambda _sha,dest:shutil.copytree(self.seed/"extension",dest)
+        ):
+            return host.perform_update(self.cfg,"chrome-extension://"+EXT_ID+"/")
+
+    def test_anonymous_update_is_explicit_and_keeps_same_extension_path(self):
         self.assertEqual(self.installed.joinpath("popup.html").read_text(),"<html>original</html>")
         # The remote changes on its own. Installed files must stay unchanged until click.
         (self.seed/"extension"/"popup.html").write_text("<html>updated</html>")
         self.commit_push()
         self.assertEqual(self.installed.joinpath("popup.html").read_text(),"<html>original</html>")
-        result=host.perform_update(self.cfg,"chrome-extension://"+EXT_ID+"/")
+        result=self.update_from_fixture()
         self.assertTrue(result["ok"])
         self.assertTrue(result["updated"])
         self.assertEqual(result["version"],"2.2.1")
         self.assertEqual(self.installed.joinpath("popup.html").read_text(),"<html>updated</html>")
         self.assertEqual((self.installed.parent/(".teamscc-backup-"+self.installed.name)/"popup.html").read_text(),"<html>original</html>")
-        self.assertEqual(json.loads(self.cfg.read_text())["installed_commit"],run("git","rev-parse","HEAD",cwd=self.repo))
-        again=host.perform_update(self.cfg,"chrome-extension://"+EXT_ID+"/")
+        self.assertEqual(json.loads(self.cfg.read_text())["installed_commit"],run("git","rev-parse","HEAD",cwd=self.seed))
+        again=self.update_from_fixture()
         self.assertFalse(again["updated"])
 
     def test_sender_origin_is_restricted(self):
@@ -98,7 +110,55 @@ class TestNativeUpdater(unittest.TestCase):
     def test_untrusted_git_remote_is_rejected(self):
         run("git","remote","set-url","origin","https://github.com/other/repo.git",cwd=self.repo)
         with self.assertRaisesRegex(host.UpdateError,"Repositorio no autorizado"):
-            host.perform_update(self.cfg,"chrome-extension://"+EXT_ID+"/")
+            host.verify_repo(self.repo,"main")
+
+
+    def test_runtime_does_not_invoke_git_or_credentials(self):
+        with patch.object(host,"git",side_effect=AssertionError("Git must never execute")):
+            result=self.update_from_fixture()
+        self.assertTrue(result["ok"])
+        self.assertFalse(result["updated"])
+
+    def test_anonymous_http_headers_do_not_contain_authorization(self):
+        class Response:
+            def __enter__(self): return self
+            def __exit__(self,*args): return False
+            def read(self,n): return b'{"sha":"'+b'a'*40+b'"}'
+            def geturl(self): return host.PUBLIC_API+"/commits/main"
+        def fake_urlopen(req,timeout):
+            self.assertEqual(req.get_header("Authorization"),None)
+            self.assertIn("TeamsCC",req.get_header("User-agent"))
+            return Response()
+        with patch.object(host,"urlopen",side_effect=fake_urlopen):
+            self.assertEqual(host.public_get(host.PUBLIC_API+"/commits/main",1024),
+                             b'{"sha":"'+b'a'*40+b'"}')
+
+    def test_public_zip_keeps_only_extension_content(self):
+        stream=io.BytesIO()
+        root="machina13-teams-cc-homelab-abc1234/"
+        with zipfile.ZipFile(stream,"w") as archive:
+            archive.writestr(root+"README.md","not installed")
+            archive.writestr(root+"extension/manifest.json",json.dumps({
+                "name":host.NAME,"version":"2.2.1",
+                "permissions":["nativeMessaging"]}))
+            archive.writestr(root+"extension/popup.html","<html>test</html>")
+            archive.writestr(root+"extension/updater.js","// updater")
+        with tempfile.TemporaryDirectory() as td:
+            with patch.object(host,"public_get",return_value=stream.getvalue()):
+                out=Path(td)/"extension"
+                host.public_extension("a"*40,out)
+                self.assertEqual(host.version(out),"2.2.1")
+                self.assertFalse((Path(td)/"README.md").exists())
+
+    def test_public_zip_rejects_directory_traversal(self):
+        stream=io.BytesIO()
+        root="machina13-teams-cc-homelab-abc1234/"
+        with zipfile.ZipFile(stream,"w") as archive:
+            archive.writestr(root+"extension/../leak.txt","should fail")
+        with tempfile.TemporaryDirectory() as td:
+            with patch.object(host,"public_get",return_value=stream.getvalue()):
+                with self.assertRaisesRegex(host.UpdateError,"Ruta no permitida"):
+                    host.public_extension("a"*40,Path(td)/"extension")
 
     def test_only_fixed_native_action_accepted(self):
         payload=json.dumps({"action":"run","command":"id"}).encode()

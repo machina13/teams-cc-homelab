@@ -10,6 +10,7 @@ import argparse
 import json
 import os
 import re
+import shutil
 import shlex
 import sys
 from pathlib import Path
@@ -192,10 +193,17 @@ def install(repo,extension_id,extension_dir,browser="chrome",home=None):
         raise UpdateError("Falta scripts/native_update_host.py")
     wrapperdir=home/".local"/"share"/"teamscc-updater"
     wrapperdir.mkdir(parents=True,exist_ok=True,mode=0o700)
+    wrapperdir.chmod(0o700)
+    # Install a standalone copy: future updates must never depend on Git auth.
+    local_host=wrapperdir/"native_update_host.py"
+    staged=wrapperdir/"native_update_host.py.new"
+    shutil.copyfile(str(script),str(staged))
+    staged.chmod(0o600)
+    os.replace(str(staged),str(local_host))
     wrapper=wrapperdir/"native_host"
     wrapper.write_text(
         "#!/bin/sh\nexec "+shlex.quote(sys.executable)+" "+
-        shlex.quote(str(script))+' "$@"\n',encoding="utf-8"
+        shlex.quote(str(local_host))+' "$@"\n',encoding="utf-8"
     )
     wrapper.chmod(0o700)
     native_manifest={

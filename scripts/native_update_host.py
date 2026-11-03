@@ -2,10 +2,12 @@
 """Teams CC: manually update an unpacked Chrome extension from a public GitHub repo.
 
 Chrome Native Messaging process. Strict protocol: fixed action only, no input
-paths/URLs/commands, Git access stays in the local user's environment.
-No background jobs, polling, remote update endpoints, or automatic installation.
+paths/URLs/commands. Updates download anonymous HTTPS archives from the fixed
+PUBLIC GitHub repository, without Git credential helpers, prompts or tokens.
+No background jobs, polling, or automatic installation.
 """
 import fcntl
+import io
 import json
 import os
 import re
@@ -14,12 +16,20 @@ import struct
 import subprocess
 import sys
 import tempfile
+import zipfile
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlsplit
+from urllib.request import Request, urlopen
 from pathlib import Path
 
 CONFIG = Path.home() / ".config" / "teamscc-updater" / "config.json"
 HOST = "com.machina13.teamscc_updater"
 NAME = "Teams CC Homelab"
 MAX_MESSAGE = 8192
+PUBLIC_API = "https://api.github.com/repos/machina13/teams-cc-homelab"
+MAX_DOWNLOAD = 8 * 1024 * 1024
+MAX_EXPANDED = 16 * 1024 * 1024
+ALLOWED_HOSTS = {"api.github.com", "codeload.github.com"}
 REPO_URLS = {
     "git@github.com:machina13/teams-cc-homelab.git",
     "ssh://git@github.com/machina13/teams-cc-homelab.git",
@@ -81,6 +91,95 @@ def version(path):
         return value
     except (OSError, ValueError, KeyError, TypeError) as exc:
         raise UpdateError("No se pudo validar manifest.json") from exc
+
+
+def public_get(url, max_size):
+    """Fetch fixed public GitHub endpoints anonymously; never consult Git auth."""
+    request = Request(url, headers={
+        "User-Agent": "TeamsCC-Homelab-NoAuth-Updater",
+        "Accept": "application/vnd.github+json",
+    })
+    try:
+        with urlopen(request, timeout=35) as response:
+            actual = urlsplit(response.geturl())
+            if actual.scheme != "https" or actual.hostname not in ALLOWED_HOSTS:
+                raise UpdateError("Redirección de GitHub no autorizada")
+            data = response.read(max_size + 1)
+            if len(data) > max_size:
+                raise UpdateError("Descarga de GitHub excede el tamaño permitido")
+            return data
+    except (HTTPError, URLError, TimeoutError, OSError) as exc:
+        raise UpdateError(
+            "No se pudo consultar GitHub público por HTTPS (sin credenciales). "
+            "Comprueba la red o el límite de API."
+        ) from exc
+
+
+def public_head():
+    """Pin the archive to a validated 40-digit commit SHA on main."""
+    try:
+        obj = json.loads(public_get(PUBLIC_API + "/commits/main", 262144))
+        sha = obj.get("sha")
+        if not isinstance(sha, str) or not re.fullmatch(r"[0-9a-f]{40}", sha):
+            raise ValueError("Invalid commit")
+        return sha
+    except (UnicodeError, ValueError, TypeError, AttributeError) as exc:
+        raise UpdateError("GitHub no devolvió un commit válido para main") from exc
+
+
+def public_extension(sha, destination):
+    """Extract ONLY extension/ from a size-limited pinned GitHub ZIP archive."""
+    archive = public_get(PUBLIC_API + "/zipball/" + sha, MAX_DOWNLOAD)
+    destination.mkdir(mode=0o700)
+    try:
+        with zipfile.ZipFile(io.BytesIO(archive)) as package:
+            members = package.infolist()
+            if len(members) > 300:
+                raise UpdateError("Paquete GitHub contiene demasiados archivos")
+            total = 0
+            seen = set()
+            for member in members:
+                parts = member.filename.split("/")
+                if (
+                    len(parts) < 3 or
+                    not parts[0].startswith("machina13-teams-cc-homelab-") or
+                    parts[1] != "extension"
+                ):
+                    continue
+                if (
+                    "\\\\" in member.filename or
+                    any(p in ("", ".", "..") for p in parts[:-1]) or
+                    (not member.filename.endswith("/") and parts[-1] in ("", ".", ".."))
+                ):
+                    raise UpdateError("Ruta no permitida en archivo GitHub")
+                mode = (member.external_attr >> 16) & 0o170000
+                if mode not in (0, 0o100000, 0o040000):
+                    raise UpdateError("Enlace u objeto no permitido en paquete")
+                relative = parts[2:]
+                if not relative or member.filename.endswith("/"):
+                    continue
+                if member.file_size > 3 * 1024 * 1024:
+                    raise UpdateError("Archivo GitHub demasiado grande")
+                total += member.file_size
+                if total > MAX_EXPANDED:
+                    raise UpdateError("Paquete GitHub excede tamaño descomprimido")
+                path = destination.joinpath(*relative)
+                if str(path) in seen:
+                    raise UpdateError("Archivos duplicados en paquete GitHub")
+                seen.add(str(path))
+                path.parent.mkdir(parents=True, exist_ok=True)
+                # Copy with an explicit bound; never call extractall().
+                with package.open(member) as source, open(path, "wb") as target:
+                    remaining = member.file_size
+                    while remaining:
+                        piece = source.read(min(65536, remaining))
+                        if not piece:
+                            raise UpdateError("Archivo ZIP truncado")
+                        target.write(piece)
+                        remaining -= len(piece)
+            version(destination)
+    except (zipfile.BadZipFile, OSError, EOFError, RuntimeError) as exc:
+        raise UpdateError("Archivo público de GitHub inválido o incompleto") from exc
 
 
 def sync_extension(source, dest):
@@ -152,26 +251,25 @@ def perform_update(config_path=CONFIG, origin=None):
             fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
         except BlockingIOError:
             raise UpdateError("Ya existe una actualización en curso") from None
-        repo=Path(cfg["repo_dir"]).expanduser().resolve()
         dest=Path(cfg["extension_dir"]).expanduser().absolute()
-        if not repo.is_dir() or not dest.is_dir():
-            raise UpdateError("No se encuentra el repositorio o la extensión instalada")
-        verify_repo(repo,cfg["branch"])
+        if cfg["branch"] != "main":
+            raise UpdateError("Solo se permite actualizar desde main público")
+        if not dest.is_dir() or dest.is_symlink():
+            raise UpdateError("No se encuentra la extensión instalada")
         version(dest)
-        if git(repo,"status","--porcelain"):
-            raise UpdateError("El repositorio contiene cambios locales; revísalos antes de actualizar")
-        old_head=git(repo,"rev-parse","HEAD")
-        git(repo,"fetch","--no-tags","origin","refs/heads/"+cfg["branch"],timeout=90)
-        target=git(repo,"rev-parse","FETCH_HEAD")
-        if old_head!=target:
-            git(repo,"merge-base","--is-ancestor",old_head,target)
-            git(repo,"merge","--ff-only","FETCH_HEAD")
-        # Always verify identity and required files before replacing the unpacked folder.
-        new_version=version(repo/"extension")
-        changed=cfg["installed_commit"]!=target
+        # No git fetch, credential.helper, SSH, tokens or password prompts.
+        target = public_head()
+        changed = cfg["installed_commit"] != target
+        new_version = version(dest)
         if changed:
-            sync_extension(repo/"extension",dest)
-            cfg["installed_commit"]=target
+            with tempfile.TemporaryDirectory(
+                prefix=".teamscc-public-", dir=str(dest.parent)
+            ) as work:
+                source = Path(work) / "extension"
+                public_extension(target, source)
+                new_version = version(source)
+                sync_extension(source, dest)
+            cfg["installed_commit"] = target
             fd,tmp=tempfile.mkstemp(prefix=".teamscc-config-",dir=str(config_path.parent))
             try:
                 with os.fdopen(fd,"w",encoding="utf-8") as file:
