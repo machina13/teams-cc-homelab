@@ -1,10 +1,11 @@
 const $=s=>document.querySelector(s);
-const DEFAULTS={enabled:false,token:'',server:'',audioStatus:{status:'stopped',error:''},queue:[],includeMic:false,lastSync:'',lastError:'',lastCaptionSeen:'',connection:null};
+const DEFAULTS={enabled:false,meetingPrompts:true,token:'',server:'',audioStatus:{status:'stopped',error:''},queue:[],includeMic:false,lastSync:'',lastError:'',lastCaptionSeen:'',connection:null};
 function time(s){if(!s)return '';const t=new Date(s);return Number.isNaN(t.valueOf())?s:t.toLocaleString('es-CL')}
 function status(message,klass){const label=$('#connectStatus');label.textContent=message;label.className=klass||''}
 async function render(){
   const c=await chrome.storage.local.get(DEFAULTS);
   $('#enabled').checked=c.enabled;
+  $('#meetingPrompts').checked=c.meetingPrompts!==false;
   $('#token').value=c.token;
   $('#server').value=c.server;
   $('#mic').checked=!!c.includeMic;
@@ -80,6 +81,10 @@ $('#save').onclick=()=>{
     await check();
   }).catch(err=>status('Configuración no guardada: '+String(err.message||err),'bad'))
     .finally(()=>{button.disabled=false});
+};
+// This preference is local and independent from the server/token Save action.
+$('#meetingPrompts').onchange=()=>{
+  chrome.storage.local.set({meetingPrompts:$('#meetingPrompts').checked}).catch(()=>{});
 };
 $('#check').onclick=check;
 $('#retry').onclick=async()=>{

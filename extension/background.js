@@ -44,6 +44,27 @@ async function probe(){
 }
 
 chrome.runtime.onMessage.addListener((m,sender,reply)=>{
+  if (m?.type === 'OPEN_RECORDING_POPUP') {
+    const page = sender.tab?.url || sender.url || '';
+    if (sender.id !== chrome.runtime.id || !sender.tab?.id ||
+        !/^https:\/\/teams\.(microsoft\.com|cloud\.microsoft|live\.com)\//.test(page)) {
+      reply({ok:false,error:'La solicitud debe venir de una reunión de Teams Web'});
+      return false;
+    }
+    // Invoke immediately in response to the user's click in the Teams page.
+    // Some Chrome policies do not propagate the gesture; the content script
+    // then explains how to open the toolbar popup manually.
+    try {
+      if (typeof chrome.action.openPopup !== 'function')
+        throw Error('No está disponible la apertura del popup');
+      Promise.resolve(chrome.action.openPopup({windowId:sender.tab.windowId}))
+        .then(()=>reply({ok:true}))
+        .catch(()=>reply({ok:false,error:'Abre Teams CC desde la barra de Chrome'}));
+    } catch (_err) {
+      reply({ok:false,error:'Abre Teams CC desde la barra de Chrome'});
+    }
+    return true;
+  }
   if(m?.type==='CHECK_CONNECTION'){
     serial(probe).then(reply).catch(err=>reply({ok:false,error:String(err)}));
     return true;

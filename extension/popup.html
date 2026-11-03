@@ -18,11 +18,12 @@ button.secondary{background:#36475f}
 label{cursor:pointer}
 </style></head>
 <body>
-<h3>Teams CC · Homelab <span class="small">v2.2.1</span></h3>
+<h3>Teams CC · Homelab <span class="small">v2.3.0</span></h3>
 <p class="small">URL de tu servidor Teams CC (configuración privada de Chrome):</p>
 <input id="server" type="url" autocomplete="off" spellcheck="false" placeholder="https://servidor.example:puerto" aria-label="Dirección del servidor">
 <p class="small">Pulsa Guardar para autorizar únicamente el dominio/IP y el puerto indicados. Chrome almacena esta URL localmente; no se publica en GitHub. Si utilizas HTTP, el token y los audios viajan sin cifrado.</p>
 <label class="line"><input type="checkbox" id="enabled"> Habilitar captura de CC</label>
+<label class="line"><input type="checkbox" id="meetingPrompts"> Avisarme al entrar a una reunión (grabación opcional)</label>
 <label for="token">Token privado del servidor</label>
 <input type="password" id="token" placeholder="Introduce el token" autocomplete="off">
 <div class="buttons"><button id="save">Guardar</button>
