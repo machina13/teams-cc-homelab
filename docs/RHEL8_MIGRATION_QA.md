@@ -81,7 +81,23 @@ Para E4–E6 utiliza **solo una reunión de prueba con consentimiento**, sin mat
 - **Varias instalaciones detectadas:** verifica cuál tiene el ID original; evita instalar duplicados.
 - **Conflicto de Git:** no utilices `reset --hard`, no elimines la carpeta y no modifiques la rama sin revisar los cambios.
 
-## G. Criterios de cierre
+## G. Actualización sin credenciales GitHub para instalaciones anteriores
+
+Si el botón de GitHub abre un diálogo de usuario/contraseña o invoca el gestor de credenciales, la instalación todavía utiliza el antiguo host con `git fetch`. El repositorio definitivo es público: **no ingreses ni almacenes credenciales de GitHub**.
+
+Ejecuta una sola vez en RHEL 8, como el usuario de Chrome:
+
+```bash
+curl -fsSL --retry 2 -o /tmp/teamscc-upgrade-noauth.py \
+  https://raw.githubusercontent.com/machina13/teams-cc-homelab/main/scripts/upgrade_noauth_host.py
+python3 /tmp/teamscc-upgrade-noauth.py
+```
+
+El bootstrap reemplaza únicamente el host local registrado, sin tocar Chrome, el ID, el token, el backend ni la carpeta de extensión. Mantiene una copia de recuperación del wrapper anterior y no usa Git.
+
+Luego, sin grabaciones activas, prueba **Actualizar desde GitHub**: ahora obtiene el commit de `main` y la carpeta `extension/` del ZIP público por HTTPS anónimo. Si falla la conexión, devuelve un error sin solicitar contraseña.
+
+## H. Criterios de cierre
 
 - Nuevo repositorio público con pipeline verde y sin exposición evidente de secretos.
 - Repositorio anterior privado e independiente.
