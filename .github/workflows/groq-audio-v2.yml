@@ -1,0 +1,41 @@
+name: Validate Teams CC Groq v2
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan public-source secrets
+        run: python3 scripts/check_public_secrets.py
+      - name: Python syntax
+        run: python3 -m compileall -q app tests scripts
+      - name: Unit tests (mock Groq)
+        run: python3 -m unittest discover -s tests -v
+      - name: Extension JS syntax
+        run: |
+          for f in extension/*.js app/app.js; do node --check "$f"; done
+      - name: Chrome extension regression tests
+        run: node --test tests/test_extension_record.cjs tests/test_background_capture.cjs tests/test_mic_options.cjs
+      - name: Web audio playback regression tests
+        run: node --test tests/test_web_audio_playback.cjs
+      - name: Private GitHub updater popup tests
+        run: node --test tests/test_updater_popup.cjs
+      - name: Custom server address and on-demand origin permission
+        run: node --test tests/test_server_configuration.cjs
+      - name: Extension manifest
+        run: python3 -m json.tool extension/manifest.json >/dev/null
+      - name: Package extension
+        run: python3 scripts/package_extension.py
+      - name: Publish installable extension artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: teams-cc-groq-v2
+          path: teams-cc-groq-v2.zip
+          retention-days: 14

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Teams CC · Configuración del micrófono</title>
+<style>
+:root{color-scheme:dark}
+body{max-width:680px;margin:38px auto;padding:0 20px;background:#111a2a;color:#f3f5ff;font:15px/1.55 system-ui,sans-serif}
+h1{font-size:23px}h2{font-size:17px}
+.panel{background:#1d293b;border:1px solid #32425d;border-radius:12px;padding:22px;margin:22px 0}
+button{border:0;border-radius:8px;background:#5069c7;color:white;cursor:pointer;padding:12px 18px;margin:5px 6px 5px 0;font:inherit}
+button.secondary{background:#36475f}
+.good{color:#79e8a9}.bad{color:#ff9c9c}.warn{color:#f9d68b}
+small,.small{font-size:13px;color:#b5c4db}
+code{overflow-wrap:anywhere;background:#111a2a;padding:3px 5px}
+#state{font-weight:700}
+</style>
+</head>
+<body>
+<h1>Teams CC · Autorizar micrófono</h1>
+<p>Esta configuración se realiza <strong>una vez por perfil de Chrome y extensión</strong>. Al aceptar, Chrome puede recordar el permiso para tus reuniones siguientes.</p>
+<section class="panel">
+<h2>Permiso del micrófono</h2>
+<p id="state" role="status" aria-live="polite">Comprobando el permiso...</p>
+<button id="authorize">Autorizar micrófono</button>
+<button id="check" class="secondary">Comprobar permiso</button>
+<p class="small" id="detail"></p>
+</section>
+<section class="panel">
+<h2>Si Chrome bloquea la solicitud</h2>
+<p>Abre <code>chrome://extensions</code>, busca <strong>Teams CC Homelab</strong>, elige <strong>Detalles → Configuración del sitio</strong> y cambia <strong>Micrófono → Permitir</strong>, si está disponible. Si Chrome indica que está administrado, consulta con el administrador.</p>
+<p>Origen de esta extensión: <code id="origin"></code></p>
+<button id="settings" class="secondary">Abrir configuración de permisos</button>
+</section>
+<p class="small">Esta comprobación abre brevemente el micrófono y detiene la pista enseguida. No graba audio ni envía datos a Groq o al homelab. La grabación real solo comienza cuando autorizas una reunión y pulsas «Grabar audio».</p>
+<script src="options.js"></script>
+</body>
+</html>

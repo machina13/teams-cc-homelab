@@ -1,0 +1,26 @@
+.env
+.env.*
+!.env.example
+**/secrets/
+**/*.key
+**/*.pem
+**/data/
+**/*.db
+**/backups/
+
+# Local Chrome updater and test caches; never commit generated packages.
+**/__pycache__/
+*.py[cod]
+teams-cc-groq-v2.zip
+
+# Public-source hardening: never stage local credentials or media
+**/private/
+**/audio/
+**/*.sqlite3
+**/*.webm
+**/*.wav
+**/*.mp3
+**/*.p12
+**/*.pfx
+**/id_rsa
+**/id_ed25519

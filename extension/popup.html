@@ -1,0 +1,62 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+body{font:13px system-ui,sans-serif;background:#111a2a;color:#f3f5ff;width:337px;padding:15px;margin:0}
+h3{font-size:17px;margin:0 0 5px}
+p{line-height:1.45;margin:8px 0;color:#cbd5e1}
+.server{word-break:break-all;background:#1d293b;padding:10px;border-radius:8px;color:#cddaff;font-size:12px}
+.line{display:flex;align-items:center;gap:8px;margin:13px 0}
+input[type=url]{display:block;width:95%;padding:10px;background:#252f44;color:white;border:1px solid #586782;border-radius:7px;margin:7px 0}
+input[type=password]{display:block;width:95%;padding:10px;background:#252f44;color:white;border:1px solid #586782;border-radius:7px;margin:7px 0}
+button{cursor:pointer;padding:9px 12px;border:0;border-radius:7px;background:#5069c7;color:#fff;font:inherit}
+button.secondary{background:#36475f}
+.buttons{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}
+.status{padding:11px;border-radius:8px;background:#1d293b;line-height:1.65;margin-top:12px}
+.status b{display:block;font-weight:600}
+.good{color:#79e8a9}.bad{color:#ff9c9c}.warn{color:#f9d68b}
+.small{font-size:11px;color:#9fafc6}
+label{cursor:pointer}
+</style></head>
+<body>
+<h3>Teams CC · Homelab <span class="small">v2.2.1</span></h3>
+<p class="small">URL de tu servidor Teams CC (configuración privada de Chrome):</p>
+<input id="server" type="url" autocomplete="off" spellcheck="false" placeholder="https://servidor.example:puerto" aria-label="Dirección del servidor">
+<p class="small">Pulsa Guardar para autorizar únicamente el dominio/IP y el puerto indicados. Chrome almacena esta URL localmente; no se publica en GitHub. Si utilizas HTTP, el token y los audios viajan sin cifrado.</p>
+<label class="line"><input type="checkbox" id="enabled"> Habilitar captura de CC</label>
+<label for="token">Token privado del servidor</label>
+<input type="password" id="token" placeholder="Introduce el token" autocomplete="off">
+<div class="buttons"><button id="save">Guardar</button>
+<button id="check" class="secondary">Probar conexión</button>
+<button id="retry" class="secondary">Sincronizar</button></div>
+<div class="status" aria-live="polite">
+<b id="connectStatus">Comprobación pendiente</b>
+<div id="meetingCount"></div>
+<div id="captureStatus">Captura deshabilitada</div>
+<div id="queueStatus">Pendientes: 0</div>
+<div class="small" id="syncStatus">Sin transcripciones enviadas todavía</div>
+</div>
+<section class="status">
+<b>Captura de audio (archivo local, sin Groq)</b>
+<p class="small">Solo Teams Web · Chrome 116+. Pulsa Grabar para iniciar; no se graba automáticamente.</p>
+<label class="line"><input type="checkbox" id="mic"> Incluir mi micrófono (opcional)</label>
+<div><button class="secondary" id="prepareMic" type="button">Configurar permiso permanente</button></div>
+<div id="micState" class="small" aria-live="polite">Comprobando el permiso de micrófono de esta extensión...</div><p class="small">La autorización se configura una vez para todas tus reuniones; la grabación seguirá siendo manual.</p>
+<label class="line"><input type="checkbox" id="consent"> Confirmo que tengo autorización para grabar y almacenar el audio de esta reunión en el homelab.</label>
+<div class="buttons">
+  <button id="record">Grabar audio</button>
+  <button class="secondary" id="stop">Detener</button>
+  <button class="secondary" id="retryAudio">Reintentar envío</button>
+  <button class="secondary" id="inspectAudio">Comprobar captura</button>
+</div>
+<div id="audioState" class="small" aria-live="polite">Audio detenido</div>
+</section>
+<section class="status" id="privateUpdater">
+<b>Actualización manual desde GitHub</b>
+<p class="small">Solo cuando pulses el botón. El código es público, pero tus credenciales permanecen locales. Requiere configurar una vez el actualizador en Chrome Linux.</p>
+<div class="buttons"><button type="button" id="updateFromGitHub">Actualizar desde GitHub</button></div>
+<div class="small" id="updateGitHubStatus" role="status" aria-live="polite">Sin comprobaciones automáticas.</div>
+</section>
+<p class="small">CC sigue operativo como antes. En esta versión HTTP, token y audio viajan sin cifrado. No grabes reuniones confidenciales. Los audios se guardan primero en Docker Labs. Groq solo recibe los fragmentos que selecciones y autorices después en la interfaz web. No agregues la clave de Groq en esta extensión.</p>
+<script src="popup.js"></script>
+<script src="updater.js"></script>
+</body></html>

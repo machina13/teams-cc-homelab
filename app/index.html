@@ -1,0 +1,18 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Teams · Transcripciones</title>
+<style>body{font:15px system-ui,sans-serif;max-width:1050px;margin:35px auto;padding:0 20px;background:#10141d;color:#e5e7eb}h1{font-size:25px}button,input{font:inherit;border-radius:8px;padding:11px;border:1px solid #445}button{cursor:pointer;background:#3949ab;color:white}input{background:#1b2432;color:white;min-width:310px}section{background:#1b2432;padding:20px;border-radius:13px;margin:18px 0}article{border-bottom:1px solid #445;padding:13px 0}small,.sub{color:#aab5c8}a{color:#b0c6ff}#captionRows{white-space:pre-wrap;line-height:1.5}strong{color:white}p{line-height:1.55}</style></head><body>
+<h1>Transcripciones de Microsoft Teams</h1><p class="sub">Almacenamiento privado en Docker Labs · CC + ASR opcional vía Groq</p>
+<section><label>Token de acceso: <input id="token" type="password" autocomplete="off" placeholder="Token del servidor"></label> <button id="connect">Conectar</button> <p><small>El token se mantiene solo durante esta pestaña. Extensión privada v2.1: actualizaciones manuales desde GitHub mediante el botón de la extensión. El código no se distribuye públicamente.</small></p></section>
+<section id="groqSettings">
+<h2>Configuración de Groq</h2>
+<p class="sub">Motor de transcripción: Whisper Large V3. La grabación se almacena localmente; Groq se utiliza únicamente cuando seleccionas una reunión y autorizas su transcripción.</p>
+<p id="groqStatus" role="status" aria-live="polite">Conecta con tu token para consultar la configuración.</p>
+<div><label for="groqKey">API key de Groq:</label>
+<input id="groqKey" type="password" autocomplete="new-password" spellcheck="false" placeholder="gsk_..." maxlength="300"></div>
+<div><button id="saveGroq" type="button">Guardar / reemplazar clave</button>
+<button id="testGroq" type="button">Probar conexión con Groq</button></div>
+<p id="groqFeedback" class="sub" aria-live="polite"></p>
+<p class="sub"><strong>Seguridad:</strong> esta versión continúa en HTTP. Por seguridad, la configuración de credenciales solo está habilitada para conexiones desde la red local. No introduzcas la clave desde Internet ni desde redes compartidas: el tráfico HTTP no está cifrado. La clave no se mostrará nuevamente ni se guardará en el navegador.</p>
+</section>
+<section><h2>Reuniones</h2><div id="status">Conecta con tu token para consultar las transcripciones.</div><div id="meetings"></div></section>
+<section id="detail" hidden><h2 id="meetingTitle"></h2><div><button id="downloadTxt">Descargar TXT</button> <button id="downloadJson">Descargar JSON</button></div><h3>Subtítulos Teams (CC)</h3><div id="captionRows"></div><h3>Audio guardado · Transcripción bajo demanda</h3><p><small>Grabar no consume cuota de Groq. Solo los fragmentos seleccionados se envían a Groq cuando confirmas.</small></p><div><button id="selectPending" type="button">Seleccionar toda la reunión pendiente</button> <button id="deselectAudio" type="button">Quitar selección</button></div><div id="audioList"></div><label><input type="checkbox" id="authorizeTranscribe"> Autorizo enviar estos fragmentos a Groq para transcribirlos.</label> <button id="transcribeSelected">Transcribir seleccionados</button> <button id="refreshDetail">Actualizar estados</button><p id="asrStatus" class="sub" aria-live="polite"></p><p id="audioPlaybackStatus" class="sub" role="status" aria-live="polite"></p><div id="audioPlayerHome" hidden><audio id="audioPlayer" controls preload="none" hidden></audio></div><h3>Transcripción Groq (ASR, sin diarización)</h3><div id="asrRows"></div></section>
+<script src="/app.js"></script></body></html>

@@ -1,0 +1,51 @@
+{
+  "manifest_version": 3,
+  "name": "Teams CC Homelab",
+  "version": "2.2.1",
+  "description": "Captura CC y audio de Teams Web con autorización; guarda audio en homelab por HTTP. Groq bajo demanda.",
+  "permissions": [
+    "storage",
+    "alarms",
+    "unlimitedStorage",
+    "activeTab",
+    "tabCapture",
+    "offscreen",
+    "scripting",
+    "nativeMessaging",
+    "permissions"
+  ],
+  "host_permissions": [
+    "https://teams.microsoft.com/*",
+    "https://teams.cloud.microsoft/*",
+    "https://teams.live.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Teams CC · Homelab"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://teams.microsoft.com/*",
+        "https://teams.cloud.microsoft/*",
+        "https://teams.live.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "minimum_chrome_version": "116",
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "optional_host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ]
+}
