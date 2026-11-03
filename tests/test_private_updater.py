@@ -19,7 +19,7 @@ BRANCH="main"
 EXT_ID="a"*32
 
 def run(*cmd,cwd=None):
-    p=subprocess.run(cmd,cwd=cwd,text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,check=False)
+    p=subprocess.run(cmd,cwd=cwd,universal_newlines=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,check=False)
     if p.returncode:
         raise AssertionError("git command failed: "+" ".join(map(str,cmd))+"\n"+p.stderr)
     return p.stdout.strip()
