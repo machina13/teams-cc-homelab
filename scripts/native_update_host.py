@@ -2,7 +2,7 @@
 """Teams CC: manually update an unpacked Chrome extension from a public GitHub repo.
 
 Chrome Native Messaging process. Strict protocol: fixed action only, no input
-paths/URLs/commands, private Git auth stays in the local user's Git environment.
+paths/URLs/commands, Git access stays in the local user's environment.
 No background jobs, polling, remote update endpoints, or automatic installation.
 """
 import fcntl
@@ -46,7 +46,7 @@ def git(repo, *args, timeout=65):
         raise UpdateError("Git no está disponible o se agotó el tiempo") from exc
     if process.returncode:
         # Never propagate arbitrary Git stderr: credentials / private locations.
-        raise UpdateError("Error de Git: revisa acceso autenticado y rama privada")
+        raise UpdateError("Error de Git: comprueba la red y la rama del repositorio público")
     return process.stdout.strip()
 
 
@@ -185,7 +185,7 @@ def perform_update(config_path=CONFIG, origin=None):
         return {
             "ok":True,"updated":changed,"version":new_version,
             "commit":target[:12],
-            "message":"Actualización manual desde repositorio privado"
+            "message":"Actualización manual desde repositorio público"
         }
 
 
