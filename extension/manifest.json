@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Teams CC Homelab",
-  "version": "2.2.1",
+  "version": "2.3.0",
   "description": "Captura CC y audio de Teams Web con autorización; guarda audio en homelab por HTTP. Groq bajo demanda.",
   "permissions": [
     "storage",
@@ -34,7 +34,8 @@
         "https://teams.live.com/*"
       ],
       "js": [
-        "content.js"
+        "content.js",
+        "meeting_prompt.js"
       ],
       "run_at": "document_idle"
     }
