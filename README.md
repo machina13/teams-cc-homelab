@@ -31,6 +31,10 @@ Después:
 
 Las siguientes actualizaciones serán manuales con el botón del popup, sin volver a clonar ni instalar ZIP. El actualizador bloquea el reemplazo mientras existe una grabación o fragmentos pendientes.
 
+## Checklist de migración y QA en RHEL 8
+
+Para actualizar **la extensión ya instalada**, preservando su ID, configuración y token, sigue la guía de verificación [RHEL 8: migración y pruebas](docs/RHEL8_MIGRATION_QA.md). **No desinstales ni cargues otra extensión.** El backend existente no necesita desplegarse de nuevo.
+
 ## Backend
 
 El archivo `compose.yaml` lee variables de un `.env` privado no versionado:
