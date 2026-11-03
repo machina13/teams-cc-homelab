@@ -230,13 +230,13 @@ const GROQ_ERRORS={
   unauthorized:'Token del servidor no válido. Conecta primero.',
   invalid_groq_key_format:'Formato inválido. La API key debe comenzar con gsk_.',
   invalid_request:'Solicitud inválida.',
-  groq_key_store_failed:'No fue posible guardar la clave en Docker Labs.',
+  groq_key_store_failed:'No fue posible guardar la clave en el servidor.',
   groq_key_invalid_or_denied:'Groq rechazó la API key (401/403). Comprueba que esté activa.',
   groq_key_unauthorized:'Groq devolvió 401: la clave no es válida. Genera una nueva y copia el valor completo (no el texto enmascarado de la lista).',
   groq_permission_denied:'Groq devolvió 403: la clave está bloqueada por permisos de proyecto u organización. Revisa restricciones en Groq Console.',
   groq_client_rejected:'Cloudflare bloqueó la identificación del cliente (error 1010). Actualiza el backend Teams CC.',
   groq_not_configured:'Primero guarda una API key de Groq.',
-  groq_network_unavailable:'Docker Labs no consiguió comunicarse con Groq.',
+  groq_network_unavailable:'El servidor no consiguió comunicarse con Groq.',
   groq_api_unavailable:'Groq no está disponible temporalmente.',
   groq_rate_limited:'Groq alcanzó su límite de solicitudes.',
   origin_not_allowed:'Accede desde el dominio oficial de Teams CC.',
@@ -261,7 +261,7 @@ async function loadGroqStatus(){
     const data=await res.json();
     if(!res.ok)throw Error(GROQ_ERRORS[data.error]||('HTTP '+res.status));
     $('#groqStatus').textContent=data.configured
-      ? 'API key configurada en Docker Labs. Puedes probarla o reemplazarla.'
+      ? 'API key configurada en el servidor. Puedes probarla o reemplazarla.'
       : 'Sin API key. Introduce tu clave de Groq para habilitar transcripción bajo demanda.';
   }catch(err){
     $('#groqStatus').textContent='No disponible: '+String(err.message||err);

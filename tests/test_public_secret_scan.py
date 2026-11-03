@@ -9,12 +9,25 @@ class TestPublicSecretScanner(unittest.TestCase):
         self.assertIsNotNone(scanner.RULES["Dynamic DNS hostname"].search(hostname.encode()))
 
     def test_private_lan_host_port_detected(self):
-        for prefix in ("192" + ".168", "10" + ".6", "172" + ".20"):
-            endpoint = "http://" + prefix + ".1.200:8123/"
+        for prefix in ("192" + ".168", "10" + ".254", "172" + ".31"):
+            endpoint = "http://" + prefix + ".254.253:54321/"
             with self.subTest(endpoint=prefix):
                 self.assertIsNotNone(
                     scanner.RULES["Embedded LAN host:port"].search(endpoint.encode())
                 )
+
+    def test_hardcoded_private_host_without_port_is_detected(self):
+        for prefix in ("192" + ".168", "10" + ".254", "172" + ".31"):
+            private_ip = prefix + ".254.253"
+            self.assertIsNotNone(
+                scanner.RULES["Hardcoded private IPv4 host"].search(private_ip.encode())
+            )
+
+    def test_private_deployment_name_is_rejected(self):
+        identity = "Docker" + " Labs"
+        self.assertIsNotNone(
+            scanner.RULES["Internal deployment name"].search(identity.encode())
+        )
 
     def test_expected_safe_urls_and_loopback_not_blocked(self):
         for endpoint in ("https://example.test", "http://127.0.0.1:8765"):

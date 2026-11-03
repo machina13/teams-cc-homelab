@@ -13,7 +13,11 @@ import sys
 ROOT=Path(__file__).resolve().parents[1]
 RULES={
     "Groq API key":re.compile(rb"gsk_[A-Za-z0-9_-]{20,}"),
-    "Dynamic DNS hostname":re.compile(rb"(?i:[a-z0-9-]+\.duckdns\.org)"),
+    "Dynamic DNS hostname":re.compile(rb"(?i:[a-z0-9-]+\.(?:duckdns\.org|ddns\.net|dynu\.net|hopto\.org|myqnapcloud\.com|dynv6\.net))"),
+    "Hardcoded private IPv4 host":re.compile(
+        rb"(?<![0-9])(?:192\.168\.[0-9]{1,3}|10\.[0-9]{1,3}\.[0-9]{1,3}|172\.(?:1[6-9]|2[0-9]|3[01])\.[0-9]{1,3})\.[1-9][0-9]{0,2}(?![0-9])"
+    ),
+    "Internal deployment name":re.compile(rb"(?i:docker[\s_-]*labs)"),
     "Embedded LAN host:port":re.compile(
         rb"(?<![0-9])(?:192\.168|10\.[0-9]{1,3}|172\.(?:1[6-9]|2[0-9]|3[01]))\.[0-9]{1,3}\.[0-9]{1,3}:[0-9]{2,5}\b"
     ),
