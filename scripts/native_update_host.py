@@ -55,6 +55,8 @@ def verify_repo(repo, branch):
         r"[A-Za-z0-9][A-Za-z0-9._/-]{0,120}", branch
     ) or ".." in branch:
         raise UpdateError("Rama no autorizada")
+    if branch != "main":
+        raise UpdateError("El actualizador solo permite la rama main")
     origin = git(repo, "remote", "get-url", "origin")
     if origin not in REPO_URLS:
         raise UpdateError("Repositorio no autorizado (origen distinto de machina13/teams-cc-homelab)")
