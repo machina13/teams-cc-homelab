@@ -1,6 +1,33 @@
 <!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Teams · Transcripciones</title>
-<style>body{font:15px system-ui,sans-serif;max-width:1050px;margin:35px auto;padding:0 20px;background:#10141d;color:#e5e7eb}h1{font-size:25px}button,input{font:inherit;border-radius:8px;padding:11px;border:1px solid #445}button{cursor:pointer;background:#3949ab;color:white}input{background:#1b2432;color:white;min-width:310px}section{background:#1b2432;padding:20px;border-radius:13px;margin:18px 0}article{border-bottom:1px solid #445;padding:13px 0}small,.sub{color:#aab5c8}a{color:#b0c6ff}#captionRows{white-space:pre-wrap;line-height:1.5}strong{color:white}p{line-height:1.55}</style></head><body>
-<h1>Transcripciones de Microsoft Teams</h1><p class="sub">Almacenamiento privado en el servidor configurado · CC + ASR opcional vía Groq</p>
+<style>
+:root{color-scheme:dark;--bg:#0c111b;--panel:#192332;--panel2:#212e41;--stroke:#34445a;--text:#eef3fb;--muted:#a6b7cf;--accent:#637dfa}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{font:15px/1.55 system-ui,-apple-system,Segoe UI,sans-serif;max-width:1120px;margin:0 auto;padding:28px 22px 70px;background:var(--bg);color:var(--text)}
+[hidden]{display:none!important}h1{font-size:clamp(24px,3vw,32px);line-height:1.24;letter-spacing:-.025em;margin:7px 0}h2{font-size:19px;margin:0 0 12px}h3{font-size:16px;margin:0 0 12px}p{margin:10px 0;line-height:1.6}small,.sub{color:var(--muted)}strong{color:#fff}a{color:#adc2ff}
+section{background:var(--panel);border:1px solid var(--stroke);padding:22px;border-radius:16px;margin:18px 0;box-shadow:0 8px 26px #0002}
+button,input{font:inherit;border-radius:9px;border:1px solid var(--stroke);padding:10px 13px}
+button{cursor:pointer;background:#4559bd;color:white;font-weight:560;transition:background .15s,transform .15s}button:hover{background:#566fe2}button:focus-visible,input:focus-visible{outline:2px solid #a9b9ff;outline-offset:2px}button:disabled{opacity:.55;cursor:not-allowed}
+input{background:#111b29;color:var(--text);max-width:100%}input:not([type=checkbox]){min-width:min(300px,100%)}
+input[type=checkbox]{width:18px;height:18px;min-width:18px;padding:0;accent-color:#788fff;cursor:pointer}
+.pageIntro{margin:5px 0 24px}.eyebrow{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#91a5ff}
+#meetings article{display:flex;align-items:center;justify-content:space-between;gap:16px;border-top:1px solid var(--stroke);padding:14px 0}
+#meetings article:first-child{border-top:0}#meetings article button{text-align:left;flex:0 1 58%;background:var(--panel2);border-color:var(--stroke)}
+#meetings article button:hover{background:#33466f}#meetings article small{flex:1;font-size:12px}
+#detail{margin-top:0;padding:26px}.detailNav{display:flex;align-items:center;gap:16px;justify-content:space-between;padding-bottom:19px;border-bottom:1px solid var(--stroke)}
+.secondary{background:transparent;border-color:#5b6d86;color:#d9e3f5}.secondary:hover{background:#2b3950}
+.detailHeading{padding:22px 0 8px}.detailHeading h1{overflow-wrap:anywhere}.detailActions{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}
+.detailPanel{padding:22px 0;border-top:1px solid var(--stroke)}.detailPanel:first-of-type{border-top:0}
+#captionRows,#asrRows{white-space:pre-wrap;line-height:1.65;overflow-wrap:anywhere}#captionRows p,#asrRows p{border-bottom:1px solid #304057;padding:8px 0}
+.audioToolbar{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+#audioList>div{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--stroke);flex-wrap:wrap}
+#audioList>div>span{flex:1;min-width:220px;font-size:13px}
+.consentRow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:16px;background:#131e2d;border:1px solid var(--stroke);border-radius:12px;margin:16px 0}
+.consentRow label{display:flex;align-items:center;gap:9px;flex:1;min-width:220px}
+.actionRow{display:flex;gap:8px;flex-wrap:wrap}#detailStatus:empty{display:none}
+@media(max-width:700px){body{padding:14px 12px 40px}section{padding:16px}#detail{padding:17px}#meetings article{display:block}#meetings article button{width:100%;margin-bottom:8px}#meetings article small{display:block}#audioList>div>span{min-width:180px}.detailNav{align-items:flex-start;flex-direction:column}}
+</style></head><body>
+<main id="listView">
+<div class="pageIntro"><span class="eyebrow">Teams CC · Homelab</span>
+<h1>Transcripciones de Microsoft Teams</h1><p class="sub">Tus reuniones, subtítulos y grabaciones en un solo lugar.</p></div>
 <section><label>Token de acceso: <input id="token" type="password" autocomplete="off" placeholder="Token del servidor"></label> <button id="connect">Conectar</button> <p><small>El token se mantiene solo durante esta pestaña. Extensión con código público: actualizaciones manuales desde GitHub. La dirección del servidor y sus credenciales permanecen locales.</small></p></section>
 <section id="groqSettings">
 <h2>Configuración de Groq</h2>
@@ -14,5 +41,37 @@
 <p class="sub"><strong>Seguridad:</strong> esta versión continúa en HTTP. Por seguridad, la configuración de credenciales solo está habilitada para conexiones desde la red local. No introduzcas la clave desde Internet ni desde redes compartidas: el tráfico HTTP no está cifrado. La clave no se mostrará nuevamente ni se guardará en el navegador.</p>
 </section>
 <section><h2>Reuniones</h2><div id="status">Conecta con tu token para consultar las transcripciones.</div><div id="meetings"></div></section>
-<section id="detail" hidden><h2 id="meetingTitle"></h2><div><button id="downloadTxt">Descargar TXT</button> <button id="downloadJson">Descargar JSON</button></div><h3>Subtítulos Teams (CC)</h3><div id="captionRows"></div><h3>Audio guardado · Transcripción bajo demanda</h3><p><small>Grabar no consume cuota de Groq. Solo los fragmentos seleccionados se envían a Groq cuando confirmas.</small></p><div><button id="selectPending" type="button">Seleccionar toda la reunión pendiente</button> <button id="deselectAudio" type="button">Quitar selección</button></div><div id="audioList"></div><label><input type="checkbox" id="authorizeTranscribe"> Autorizo enviar estos fragmentos a Groq para transcribirlos.</label> <button id="transcribeSelected">Transcribir seleccionados</button> <button id="refreshDetail">Actualizar estados</button><p id="asrStatus" class="sub" aria-live="polite"></p><p id="audioPlaybackStatus" class="sub" role="status" aria-live="polite"></p><div id="audioPlayerHome" hidden><audio id="audioPlayer" controls preload="none" hidden></audio></div><h3>Transcripción Groq (ASR, sin diarización)</h3><div id="asrRows"></div></section>
+</main>
+<section id="detail" hidden aria-label="Detalle de reunión">
+  <div class="detailNav">
+    <button id="backToMeetings" type="button" class="secondary">← Volver a reuniones</button>
+    <span class="eyebrow">Detalle de la reunión</span>
+  </div>
+  <div class="detailHeading">
+    <h1 id="meetingTitle">Reunión</h1>
+    <p id="meetingMeta" class="sub"></p>
+    <div class="detailActions"><button id="downloadTxt" type="button" class="secondary">Descargar TXT</button><button id="downloadJson" type="button" class="secondary">Descargar JSON</button></div>
+    <p id="detailStatus" class="sub" role="status" aria-live="polite"></p>
+  </div>
+  <div class="detailPanel" id="captionSection">
+    <h2>Transcripción · Subtítulos de Teams</h2>
+    <div id="captionRows"></div>
+  </div>
+  <div class="detailPanel" id="asrSection" hidden>
+    <h2>Transcripción de audio · Groq</h2>
+    <p class="sub">Reconocimiento de voz (ASR), sin identificación automática de hablantes.</p>
+    <div id="asrRows"></div>
+  </div>
+  <div class="detailPanel" id="audioSection" hidden>
+    <h2>Audio de la reunión</h2>
+    <p class="sub">Los audios se guardan en tu servidor. Solo se envían a Groq cuando los seleccionas y autorizas expresamente.</p>
+    <div class="audioToolbar"><button id="selectPending" type="button">Seleccionar fragmentos pendientes</button><button id="deselectAudio" type="button" class="secondary">Quitar selección</button></div>
+    <div id="audioList"></div>
+    <div class="consentRow"><label for="authorizeTranscribe"><input type="checkbox" id="authorizeTranscribe">Autorizo enviar estos fragmentos a Groq para transcribirlos.</label><button id="transcribeSelected" type="button">Transcribir seleccionados</button></div>
+    <div class="actionRow"><button id="refreshDetail" type="button" class="secondary">Actualizar estados</button></div>
+    <p id="asrStatus" class="sub" aria-live="polite"></p>
+    <p id="audioPlaybackStatus" class="sub" role="status" aria-live="polite"></p>
+    <div id="audioPlayerHome" hidden><audio id="audioPlayer" controls preload="none" hidden></audio></div>
+  </div>
+</section>
 <script src="/app.js"></script></body></html>
