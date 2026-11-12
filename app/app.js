@@ -56,7 +56,7 @@ function backToMeetings(){
   }
 }
 $('#backToMeetings').onclick=backToMeetings;
-window.addEventListener('popstate',event=>{
+if(typeof window!=='undefined')window.addEventListener('popstate',event=>{
   if(event.state?.teamsCCView==='detail'&&event.state.meetingId){
     const id=String(event.state.meetingId);
     openMeeting(meetingIndex.get(id)||{id,title:'Reunión'},false);
