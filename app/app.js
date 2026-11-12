@@ -16,13 +16,66 @@ function formatChile(raw) {
 }
 
 let token=sessionStorage.getItem('teamsToken')||'',current=null,activeAudioURL=null;
-let playFetchId=0;
+let playFetchId=0, detailRequestId=0;
+const meetingIndex=new Map();
 $('#token').value=token;
 async function api(path){
   const res=await fetch(path,{headers:{Authorization:'Bearer '+token}});
   if(!res.ok) throw Error('HTTP '+res.status);
   return res.json();
 }
+function showListView(){
+  detailRequestId++;
+  playFetchId++;
+  resetAudioPlayback();
+  current=null;
+  $('#detail').hidden=true;
+  $('#listView').hidden=false;
+  document.title='Teams · Transcripciones';
+  window.scrollTo(0,0);
+}
+function openMeeting(m,pushHistory=true){
+  if(!m?.id)return;
+  meetingIndex.set(String(m.id),m);
+  if(pushHistory)history.pushState(
+    {teamsCCView:'detail',meetingId:String(m.id),inApp:true},
+    '', '#reunion='+encodeURIComponent(String(m.id))
+  );
+  $('#listView').hidden=true;
+  $('#detail').hidden=false;
+  window.scrollTo(0,0);
+  show(m);
+}
+function backToMeetings(){
+  if(history.state?.teamsCCView==='detail'&&history.state.inApp){
+    history.back();
+  }else{
+    history.replaceState({teamsCCView:'list'},'',location.pathname+location.search);
+    showListView();
+    if(token)reload();
+  }
+}
+$('#backToMeetings').onclick=backToMeetings;
+window.addEventListener('popstate',event=>{
+  if(event.state?.teamsCCView==='detail'&&event.state.meetingId){
+    const id=String(event.state.meetingId);
+    openMeeting(meetingIndex.get(id)||{id,title:'Reunión'},false);
+  }else{
+    showListView();
+    if(token)reload();
+  }
+});
+function restoreMeetingRoute(){
+  const stateId=history.state?.teamsCCView==='detail'&&history.state.meetingId;
+  const hashId=location.hash.startsWith('#reunion=')
+    ?decodeURIComponent(location.hash.slice('#reunion='.length)):null;
+  const id=stateId||hashId;
+  if(id&&token){
+    if(!stateId)history.replaceState({teamsCCView:'detail',meetingId:id,inApp:false},'');
+    openMeeting(meetingIndex.get(String(id))||{id:String(id),title:'Reunión'},false);
+  }
+}
+
 async function reload(){
   $('#status').textContent='Cargando...';
   $('#meetings').replaceChildren();
@@ -34,7 +87,8 @@ async function reload(){
       const b=document.createElement('button');
       const meta=document.createElement('small');
       b.textContent=m.title;
-      b.addEventListener('click',()=>show(m));
+      b.addEventListener('click',()=>openMeeting(m));
+      meetingIndex.set(String(m.id),m);
       meta.textContent=' '+formatChile(m.started_at)+' · '+m.caption_count+' CC · '+(m.audio_count||0)+' audios · '+(m.asr_count||0)+' ASR';
       a.append(b,meta);
       $('#meetings').append(a);
@@ -46,10 +100,19 @@ async function show(m){
   playFetchId++;
   resetAudioPlayback();
   current=m;
+  const requestId=++detailRequestId;
+  $('#detailStatus').textContent='Cargando detalle...';
+  $('#meetingTitle').textContent=m.title||'Reunión';
+  $('#meetingMeta').textContent='';
   try{
     const d=await api('/api/meetings/'+encodeURIComponent(m.id));
-    $('#detail').hidden=false;
-    $('#meetingTitle').textContent=d.meeting.title+' · '+formatChile(d.meeting.started_at);
+    if(requestId!==detailRequestId)return;
+    $('#detailStatus').textContent='';
+    $('#meetingTitle').textContent=d.meeting.title;
+    $('#meetingMeta').textContent=formatChile(d.meeting.started_at);
+    document.title=d.meeting.title+' · Teams CC';
+    $('#audioSection').hidden=!(d.audio_files||[]).length;
+    $('#asrSection').hidden=!((d.asr_segments||[]).length||(d.audio_files||[]).length);
     const rows=$('#captionRows');
     rows.replaceChildren();
     for(const c of d.captions){
@@ -58,11 +121,12 @@ async function show(m){
       p.append(b,document.createTextNode(c.content));
       rows.append(p);
     }
+    if(!d.captions.length)rows.textContent='Esta reunión no tiene subtítulos de Teams registrados.';
     const audioList=$('#audioList');
     audioList.replaceChildren();
     for(const f of (d.audio_files||[])){
       const item=document.createElement('div');
-      item.style.cssText='display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #445;flex-wrap:wrap';
+      item.className='audioItem';
       const cb=document.createElement('input');
       cb.type='checkbox';cb.className='audioSelect';cb.value=String(f.sequence);
       cb.disabled=f.status==='transcribed' || f.status==='processing' || f.status==='queued';
@@ -95,7 +159,9 @@ async function show(m){
       asr.append(p);
     }
     if(!d.asr_segments?.length)asr.textContent='Sin audio transcrito todavía.';
-  }catch(e){alert(e.message)}
+  }catch(e){
+    if(requestId===detailRequestId)$('#detailStatus').textContent='No se pudo cargar la reunión: '+e.message;
+  }
 }
 async function dl(fmt){
   if(!current)return;
@@ -115,10 +181,11 @@ $('#connect').onclick=()=>{
   sessionStorage.setItem('teamsToken',token);
   reload();
   loadGroqStatus();
+  restoreMeetingRoute();
 };
 $('#downloadTxt').onclick=()=>dl('txt');
 $('#downloadJson').onclick=()=>dl('json');
-if(token){reload();loadGroqStatus()}
+if(token){reload();loadGroqStatus();restoreMeetingRoute()}
 
 async function fetchAudio(meetingId,sequence){
   const res=await fetch('/api/meetings/'+encodeURIComponent(meetingId)+'/audio/'+sequence,{
